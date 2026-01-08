@@ -1,0 +1,27 @@
+[package]
+name = "gamma"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+glyph_brush = "0.7.12"
+image = "0.25.9"
+kira = "0.11.0"
+pollster = "0.4.0"
+wgpu = "28.0.0"
+wgpu_glyph = "0.26.0"
+winit = "0.30.12"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "0.4.56"
+console_error_panic_hook = "0.1.7"
+web-sys = { version = "0.3.83", features = [
+    "Document",
+    "Window",
+    "Element",
+    "HtmlCanvasElement",
+] }
+wgpu = { version = "28.0.0", features = ["webgl"] }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
