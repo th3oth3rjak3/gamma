@@ -1,7 +1,5 @@
-use crate::context::GammaContext;
-
-mod context;
+mod gamma;
 
 pub mod prelude {
-    pub use crate::context::GammaContext;
+    pub use crate::gamma::Gamma;
 }
