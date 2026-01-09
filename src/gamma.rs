@@ -208,8 +208,11 @@ where
         event_loop.run_app(&mut self).map_err(|err| err.to_string())
     }
 
-    pub fn delta_time(self: &Self) -> Duration {
-        Instant::now() - self.last_frame_time
+    pub fn delta_time(self: &mut Self) -> Duration {
+        let current = Instant::now();
+        let delta = current - self.last_frame_time;
+        self.last_frame_time = current;
+        delta
     }
 }
 
@@ -305,9 +308,6 @@ where
 
                 // Call the user's draw function to prepare to draw to the window.
                 draw_fn(self);
-
-                // Update timing and request next frame
-                self.last_frame_time = Instant::now();
 
                 // Only request redraw if still running and window exists
                 if let Some(window) = &self.window {
