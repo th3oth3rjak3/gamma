@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+bytemuck = "1.24.0"
 glyph_brush = "0.7.12"
 image = "0.25.9"
 kira = "0.11.0"

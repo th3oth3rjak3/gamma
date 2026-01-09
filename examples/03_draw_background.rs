@@ -1,11 +1,11 @@
 use gamma::prelude::*;
 
 // Create some game state in order to keep track of important state at runtime.
-// We need to derive default to allow you to use the init function to load textures with the engine.
-#[derive(Default)]
 pub struct GameState {
     pub player_x: f32,
     pub player_y: f32,
+    pub background: Texture,
+    pub player: Texture,
 }
 
 // The update function is called every frame just before the draw function.
@@ -16,28 +16,40 @@ pub fn update(gamma: &mut Gamma<GameState>, state: Option<&mut GameState>) {
     let delta_time = gamma.delta_time().as_secs_f32();
 
     state.map(|s| {
-        s.player_x += 100.0 * delta_time;
-        if s.player_x > 1920.0 {
-            s.player_x = -500.0;
+        s.player_x -= 100.0 * delta_time;
+        if s.player_x < 0.0 - s.player.width as f32 {
+            s.player_x = 1920.0;
         }
-
         println!("Player X Position: {}", s.player_x);
     });
 }
 
 // The draw function is called every frame after update has finished processing.
-pub fn draw(gamma: &mut Gamma<GameState>, _state: Option<&mut GameState>) {
-    // Call clear screen at a minimum in order for the window to show.
+pub fn draw(gamma: &mut Gamma<GameState>, state: Option<&mut GameState>) {
     gamma.clear_screen(255, 0, 0);
+    state.map(|s| {
+        gamma.draw_texture(&s.background, 0.0, 0.0);
+        gamma.draw_texture(&s.player, s.player_x, s.player_y);
+    });
 }
 
 // The init function is used to create your game state. In more complex scenarios,
 // you can use the gamma instance to load textures, audio, fonts, etc. and store them
 // in your game state for later reference.
-pub fn init(_gamma: &mut Gamma<GameState>) -> Option<GameState> {
+pub fn init(gamma: &mut Gamma<GameState>) -> Option<GameState> {
+    let background = gamma
+        .load_texture_from_bytes(include_bytes!("../assets/graphics/background.png"))
+        .unwrap();
+
+    let player = gamma
+        .load_texture_from_bytes(include_bytes!("../assets/graphics/player.png"))
+        .unwrap();
+
     let state = GameState {
-        player_x: -500.0,
-        player_y: 0.0,
+        player_x: 1920.0,
+        player_y: 1080.0 / 2.0, // roughly centered
+        background,
+        player,
     };
 
     Some(state)
@@ -46,7 +58,7 @@ pub fn init(_gamma: &mut Gamma<GameState>) -> Option<GameState> {
 pub fn main() {
     let result = Gamma::new()
         // "with" methods are used to change configuration
-        .with_title("Red Window")
+        .with_title("Timber clone?")
         .with_size(1920, 1080)
         .with_resizable(false)
         .with_vsync(true)
