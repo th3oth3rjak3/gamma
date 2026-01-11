@@ -12,11 +12,9 @@ pub struct GameState {
 
 // The update function is called every frame just before the draw function.
 pub fn update(gamma: &mut Gamma<GameState>, state: &mut GameState) {
-    // Let's say the player has a speed of 100 px per second, then we can use delta_time() to move the player
-    // delta_time updates the time since the last call, it's very important to call delta_time first thing in
-    // the update function and only call it once.
     let delta_time = gamma.delta_time().as_secs_f32();
 
+    // We can use the is_key_pressed function to see if a user has the key held down.
     if gamma.is_key_pressed(KeyCode::ArrowLeft) {
         state.player_x -= PLAYER_X_SPEED * delta_time;
     }
