@@ -1,20 +1,21 @@
 use crate::gamma::Gamma;
 use std::sync::Arc;
 use wgpu::{Instance, PresentMode, SurfaceConfiguration, TextureFormat, TextureUsages};
-use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::Window;
+use winit::window::{Fullscreen, Window};
 
 pub(crate) fn initialize_rendering<S>(gamma: &mut Gamma<S>, event_loop: &ActiveEventLoop) {
-    let title = gamma.title.as_deref().unwrap_or("Gamma Game");
-    let window_size = gamma
-        .logical_size
-        .unwrap_or_else(|| LogicalSize::new(800.0, 600.0));
+    let title = gamma.title.clone();
+    let window_size = gamma.logical_size.clone();
 
-    let window_attributes = Window::default_attributes()
+    let mut window_attributes = Window::default_attributes()
         .with_title(title)
         .with_inner_size(window_size)
         .with_resizable(gamma.resizable);
+
+    if gamma.fullscreen {
+        window_attributes = window_attributes.with_fullscreen(Some(Fullscreen::Borderless(None)));
+    }
 
     let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
     let size = window.inner_size();

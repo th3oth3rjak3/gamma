@@ -9,24 +9,22 @@ pub struct GameState {
 }
 
 // The update function is called every frame just before the draw function.
-pub fn update(gamma: &mut Gamma<GameState>, state: Option<&mut GameState>) {
+pub fn update(gamma: &mut Gamma<GameState>, state: &mut GameState) {
     // Let's say the player has a speed of 100 px per second, then we can use delta_time() to move the player
     // delta_time updates the time since the last call, it's very important to call delta_time first thing in
     // the update function and only call it once.
     let delta_time = gamma.delta_time().as_secs_f32();
 
-    state.map(|s| {
-        s.player_x += 100.0 * delta_time;
-        if s.player_x > 1920.0 {
-            s.player_x = -500.0;
-        }
+    state.player_x += 100.0 * delta_time;
+    if state.player_x > 1920.0 {
+        state.player_x = -500.0;
+    }
 
-        println!("Player X Position: {}", s.player_x);
-    });
+    println!("Player X Position: {}", state.player_x);
 }
 
 // The draw function is called every frame after update has finished processing.
-pub fn draw(gamma: &mut Gamma<GameState>, _state: Option<&mut GameState>) {
+pub fn draw(gamma: &mut Gamma<GameState>, _state: &mut GameState) {
     // Call clear screen at a minimum in order for the window to show.
     gamma.clear_screen(255, 0, 0);
 }
@@ -34,17 +32,17 @@ pub fn draw(gamma: &mut Gamma<GameState>, _state: Option<&mut GameState>) {
 // The init function is used to create your game state. In more complex scenarios,
 // you can use the gamma instance to load textures, audio, fonts, etc. and store them
 // in your game state for later reference.
-pub fn init(_gamma: &mut Gamma<GameState>) -> Option<GameState> {
+pub fn init(_gamma: &mut Gamma<GameState>) -> GameState {
     let state = GameState {
         player_x: -500.0,
         player_y: 0.0,
     };
 
-    Some(state)
+    state
 }
 
 pub fn main() {
-    let result = Gamma::new()
+    let result = GammaBuilder::new()
         // "with" methods are used to change configuration
         .with_title("Red Window")
         .with_size(1920, 1080)

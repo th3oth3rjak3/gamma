@@ -1,80 +1,56 @@
 use std::time::Instant;
 
 use winit::{
-    application::ApplicationHandler,
-    event::WindowEvent,
-    event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
-    window::WindowId,
+    dpi::LogicalSize,
+    event_loop::{ControlFlow, EventLoop},
 };
 
-use crate::{gamma::Gamma, rendering::context::initialize_rendering};
+use crate::{builder::GammaBuilder, gamma::Gamma, runtime::GammaRuntime};
 
-impl<S> Gamma<S> {
-    pub fn run(mut self: Self) -> Result<(), String> {
+impl<S> GammaBuilder<S> {
+    pub fn run(self: Self) -> Result<(), String> {
+        if self.init_fn.is_none() {
+            eprintln!(
+                "Cannot call draw or update without init, please register game state with the `on_init` builder method"
+            );
+            std::process::exit(-1);
+        }
+
+        let mut gamma_instance = Gamma::<S> {
+            last_frame_time: Instant::now(),
+            current_frame: None,
+            draw_fn: self.draw_fn.unwrap_or(|_, _| {}),
+            update_fn: self.update_fn.unwrap_or(|_, _| {}),
+            init_fn: self.init_fn,
+            title: self.title.unwrap_or("Gamma Game".into()),
+            logical_size: self.logical_size.unwrap_or(LogicalSize {
+                width: 800.0,
+                height: 600.0,
+            }),
+            resizable: self.resizable,
+            vsync: self.vsync,
+            fullscreen: self.fullscreen,
+            window: Default::default(),
+            instance: None,
+            surface: None,
+            surface_config: None,
+            device: None,
+            queue: None,
+            adapter: None,
+        };
+
         let event_loop = EventLoop::new().expect("Error occurred starting the event loop");
         event_loop.set_control_flow(ControlFlow::Poll);
 
-        // Set the first frame time just before running the game
-        self.last_frame_time = Instant::now();
-        event_loop.run_app(&mut self).map_err(|err| err.to_string())
-    }
-}
+        gamma_instance.last_frame_time = Instant::now();
 
-impl<S> ApplicationHandler for Gamma<S> {
-    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        if self.window.is_some() {
-            return; // Already initialized
-        }
+        let mut runtime = GammaRuntime::<S> {
+            context: gamma_instance,
+            state: None,
+        };
 
-        initialize_rendering(self, event_loop);
-        let init_fn = self.init_fn;
-        self.state = init_fn(self);
-
-        if let Some(window) = &self.window {
-            window.request_redraw();
-        }
-    }
-
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
-        match event {
-            WindowEvent::CloseRequested => {
-                println!("The close button was pressed; stopping");
-                self.surface = None;
-                self.device = None;
-                self.queue = None;
-                self.adapter = None;
-                self.instance = None;
-                self.surface_config = None;
-                self.window = None;
-                self.state = None;
-
-                event_loop.exit();
-            }
-            WindowEvent::RedrawRequested => {
-                let update_fn = self.update_fn;
-                let draw_fn = self.draw_fn;
-
-                let mut state = self.state.take();
-
-                // Call the user's update function to update the game state.
-                update_fn(self, state.as_mut());
-
-                // Call the user's draw function to prepare to draw to the window.
-                draw_fn(self, state.as_mut());
-
-                // Put the state back where it belongs
-                self.state = state;
-
-                if let Some(frame) = self.current_frame.take() {
-                    frame.texture.present();
-                }
-
-                // Only request redraw if still running and window exists
-                if let Some(window) = &self.window {
-                    window.request_redraw();
-                }
-            }
-            _ => (),
-        }
+        event_loop
+            .run_app(&mut runtime)
+            .map_err(|err| err.to_string())
     }
 }
