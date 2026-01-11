@@ -91,7 +91,6 @@ impl<S> Gamma<S> {
         self.draw_texture_scaled(texture, x, y, texture.width as f32, texture.height as f32);
     }
 
-    // Draw a texture with custom width/height
     pub fn draw_texture_scaled(
         &mut self,
         texture: &Texture,
@@ -100,12 +99,13 @@ impl<S> Gamma<S> {
         width: f32,
         height: f32,
     ) {
-        let (surface, device, queue) = match (
+        let (surface, device, queue, pipeline) = match (
             self.surface.as_ref(),
             self.device.as_ref(),
             self.queue.as_ref(),
+            self.texture_pipeline.as_ref(),
         ) {
-            (Some(s), Some(d), Some(q)) => (s, d, q),
+            (Some(s), Some(d), Some(q), Some(p)) => (s, d, q, p),
             _ => return,
         };
 
@@ -122,20 +122,15 @@ impl<S> Gamma<S> {
         }
 
         let frame = self.current_frame.as_ref().unwrap();
-
-        // Get window dimensions for coordinate conversion
         let window_size = self.window.as_ref().unwrap().inner_size();
         let window_width = window_size.width as f32;
         let window_height = window_size.height as f32;
 
-        // Convert screen coordinates to normalized device coordinates (-1 to 1)
-        // Note: in NDC, Y goes from -1 (bottom) to 1 (top)
         let ndc_x = (x / window_width) * 2.0 - 1.0;
-        let ndc_y = 1.0 - (y / window_height) * 2.0; // Flip Y
+        let ndc_y = 1.0 - (y / window_height) * 2.0;
         let ndc_width = (width / window_width) * 2.0;
         let ndc_height = (height / window_height) * 2.0;
 
-        // Create vertices for a quad
         #[repr(C)]
         #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
         struct Vertex {
@@ -147,24 +142,23 @@ impl<S> Gamma<S> {
             Vertex {
                 position: [ndc_x, ndc_y],
                 tex_coords: [0.0, 0.0],
-            }, // Top-left
+            },
             Vertex {
                 position: [ndc_x + ndc_width, ndc_y],
                 tex_coords: [1.0, 0.0],
-            }, // Top-right
+            },
             Vertex {
                 position: [ndc_x, ndc_y - ndc_height],
                 tex_coords: [0.0, 1.0],
-            }, // Bottom-left
+            },
             Vertex {
                 position: [ndc_x + ndc_width, ndc_y - ndc_height],
                 tex_coords: [1.0, 1.0],
-            }, // Bottom-right
+            },
         ];
 
         let indices: [u16; 6] = [0, 1, 2, 1, 3, 2];
 
-        // Create buffers
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(&vertices),
@@ -177,39 +171,10 @@ impl<S> Gamma<S> {
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        // Create shader (we'll define this below)
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Texture Shader"),
-            source: wgpu::ShaderSource::Wgsl(TEXTURE_SHADER.into()),
-        });
-
-        // Create bind group layout
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Texture Bind Group Layout"),
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                        multisampled: false,
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                    count: None,
-                },
-            ],
-        });
-
-        // Create bind group
+        // Use the cached pipeline!
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Texture Bind Group"),
-            layout: &bind_group_layout,
+            layout: &pipeline.bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -220,58 +185,6 @@ impl<S> Gamma<S> {
                     resource: wgpu::BindingResource::Sampler(&texture.sampler),
                 },
             ],
-        });
-
-        // Create pipeline layout
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Texture Pipeline Layout"),
-            bind_group_layouts: &[&bind_group_layout],
-            immediate_size: 0,
-        });
-
-        // Create render pipeline
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Texture Render Pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"),
-                buffers: &[wgpu::VertexBufferLayout {
-                    array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &[
-                        wgpu::VertexAttribute {
-                            offset: 0,
-                            shader_location: 0,
-                            format: wgpu::VertexFormat::Float32x2,
-                        },
-                        wgpu::VertexAttribute {
-                            offset: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
-                            shader_location: 1,
-                            format: wgpu::VertexFormat::Float32x2,
-                        },
-                    ],
-                }],
-                compilation_options: Default::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: self.surface_config.as_ref().unwrap().format,
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: Default::default(),
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                ..Default::default()
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-            multiview_mask: None,
-            cache: None,
         });
 
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -285,7 +198,7 @@ impl<S> Gamma<S> {
                     view: &frame.view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load, // Don't clear, preserve what's already there
+                        load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
                     },
                     depth_slice: None,
@@ -296,7 +209,7 @@ impl<S> Gamma<S> {
                 multiview_mask: None,
             });
 
-            render_pass.set_pipeline(&render_pipeline);
+            render_pass.set_pipeline(&pipeline.pipeline);
             render_pass.set_bind_group(0, &bind_group, &[]);
             render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
             render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
@@ -306,34 +219,3 @@ impl<S> Gamma<S> {
         queue.submit(std::iter::once(encoder.finish()));
     }
 }
-
-// Shader code
-const TEXTURE_SHADER: &str = r#"
-struct VertexInput {
-    @location(0) position: vec2<f32>,
-    @location(1) tex_coords: vec2<f32>,
-}
-
-struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>,
-}
-
-@vertex
-fn vs_main(input: VertexInput) -> VertexOutput {
-    var out: VertexOutput;
-    out.clip_position = vec4<f32>(input.position, 0.0, 1.0);
-    out.tex_coords = input.tex_coords;
-    return out;
-}
-
-@group(0) @binding(0)
-var t_diffuse: texture_2d<f32>;
-@group(0) @binding(1)
-var s_diffuse: sampler;
-
-@fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
-}
-"#;

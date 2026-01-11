@@ -4,7 +4,10 @@ use wgpu::{Adapter, Device, Instance, Queue, Surface, SurfaceConfiguration};
 
 use winit::{dpi::LogicalSize, window::Window};
 
-use crate::{builder::InitFn, rendering::frame::Frame};
+use crate::{
+    builder::InitFn,
+    rendering::{TexturePipeline, frame::Frame},
+};
 
 pub type UpdateFn<S> = fn(&mut Gamma<S>, &mut S);
 pub type DrawFn<S> = fn(&mut Gamma<S>, &mut S);
@@ -34,6 +37,7 @@ pub struct Gamma<S> {
     pub(crate) device: Option<Device>,
     pub(crate) queue: Option<Queue>,
     pub(crate) adapter: Option<Adapter>,
+    pub(crate) texture_pipeline: Option<TexturePipeline>,
 }
 
 impl<S> Default for Gamma<S> {
@@ -66,6 +70,7 @@ impl<S> Default for Gamma<S> {
             device: None,
             queue: None,
             adapter: None,
+            texture_pipeline: None,
         }
     }
 }

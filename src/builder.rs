@@ -111,6 +111,7 @@ impl<S> GammaBuilder<S> {
             device: None,
             queue: None,
             adapter: None,
+            texture_pipeline: None,
         };
 
         let event_loop = EventLoop::new().expect("Error occurred starting the event loop");

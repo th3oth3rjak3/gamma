@@ -30,6 +30,7 @@ impl<S> ApplicationHandler for GammaRuntime<S> {
         match event {
             WindowEvent::CloseRequested => {
                 println!("The close button was pressed; stopping");
+
                 self.context.surface = None;
                 self.context.device = None;
                 self.context.queue = None;
@@ -37,6 +38,7 @@ impl<S> ApplicationHandler for GammaRuntime<S> {
                 self.context.instance = None;
                 self.context.surface_config = None;
                 self.context.window = None;
+                self.context.texture_pipeline = None;
                 self.state = None;
 
                 event_loop.exit();

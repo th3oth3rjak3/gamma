@@ -1,4 +1,5 @@
 use crate::gamma::Gamma;
+use crate::rendering::{TexturePipeline, texture};
 use std::sync::Arc;
 use wgpu::{Instance, PresentMode, SurfaceConfiguration, TextureFormat, TextureUsages};
 use winit::event_loop::ActiveEventLoop;
@@ -52,6 +53,7 @@ pub(crate) fn initialize_rendering<S>(gamma: &mut Gamma<S>, event_loop: &ActiveE
     };
 
     surface.configure(&device, &config);
+    let texture_pipeline = TexturePipeline::new(&device, config.format);
 
     gamma.window = Some(window);
     gamma.instance = Some(instance);
@@ -60,4 +62,5 @@ pub(crate) fn initialize_rendering<S>(gamma: &mut Gamma<S>, event_loop: &ActiveE
     gamma.queue = Some(queue);
     gamma.adapter = Some(adapter);
     gamma.surface_config = Some(config);
+    gamma.texture_pipeline = Some(texture_pipeline);
 }
