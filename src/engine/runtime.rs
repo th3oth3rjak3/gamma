@@ -47,13 +47,13 @@ impl<S> ApplicationHandler for GammaRuntime<S> {
                 let update_fn = self.context.update_fn;
                 let draw_fn = self.context.draw_fn;
 
-                let mut state = self.state.as_mut().expect("state not found when expected");
+                let state = self.state.as_mut().expect("state not found when expected");
 
                 // Call the user's update function to update the game state.
-                update_fn(&mut self.context, &mut state);
+                update_fn(&mut self.context, state);
 
                 // Call the user's draw function to prepare to draw to the window.
-                draw_fn(&mut self.context, &mut state);
+                draw_fn(&mut self.context, state);
 
                 if let Some(frame) = self.context.current_frame.take() {
                     frame.texture.present();

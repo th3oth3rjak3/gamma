@@ -7,7 +7,7 @@ fn draw(gamma: &mut Gamma<()>, _state: &mut ()) {
 
 fn main() {
     // Use the gamma builder to create a new gamma instance and then call run on it to start the game engine.
-    let result = GammaBuilder::new().on_draw(draw).run();
+    let result = GammaBuilder::default().on_draw(draw).run();
 
     // Don't forget to handle errors!
     if let Err(msg) = result {

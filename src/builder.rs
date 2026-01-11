@@ -25,8 +25,8 @@ pub struct GammaBuilder<S> {
     pub(crate) fullscreen: bool,
 }
 
-impl<S> GammaBuilder<S> {
-    pub fn new() -> Self {
+impl<S> Default for GammaBuilder<S> {
+    fn default() -> Self {
         Self {
             // User Provided
             draw_fn: None,
@@ -41,48 +41,50 @@ impl<S> GammaBuilder<S> {
             fullscreen: false,
         }
     }
+}
 
-    pub fn with_title(mut self: Self, title: impl Into<String>) -> Self {
+impl<S> GammaBuilder<S> {
+    pub fn with_title(mut self, title: impl Into<String>) -> Self {
         self.title = Some(title.into());
         self
     }
 
-    pub fn with_size(mut self: Self, width: u16, height: u16) -> Self {
+    pub fn with_size(mut self, width: u16, height: u16) -> Self {
         self.logical_size = Some(LogicalSize::new(width.into(), height.into()));
         self
     }
 
-    pub fn with_resizable(mut self: Self, is_resizable: bool) -> Self {
+    pub fn with_resizable(mut self, is_resizable: bool) -> Self {
         self.resizable = is_resizable;
         self
     }
 
-    pub fn with_vsync(mut self: Self, use_vsync: bool) -> Self {
+    pub fn with_vsync(mut self, use_vsync: bool) -> Self {
         self.vsync = use_vsync;
         self
     }
 
-    pub fn with_fullscreen(mut self: Self, fullscreen: bool) -> Self {
+    pub fn with_fullscreen(mut self, fullscreen: bool) -> Self {
         self.fullscreen = fullscreen;
         self
     }
 
-    pub fn on_init(mut self: Self, init: InitFn<S>) -> Self {
+    pub fn on_init(mut self, init: InitFn<S>) -> Self {
         self.init_fn = Some(init);
         self
     }
 
-    pub fn on_draw(mut self: Self, draw: DrawFn<S>) -> Self {
+    pub fn on_draw(mut self, draw: DrawFn<S>) -> Self {
         self.draw_fn = Some(draw);
         self
     }
 
-    pub fn on_update(mut self: Self, update: UpdateFn<S>) -> Self {
+    pub fn on_update(mut self, update: UpdateFn<S>) -> Self {
         self.update_fn = Some(update);
         self
     }
 
-    pub fn run(self: Self) -> Result<(), String> {
+    pub fn run(self) -> Result<(), String> {
         if self.init_fn.is_none() {
             eprintln!(
                 "Cannot call draw or update without init, please register game state with the `on_init` builder method"

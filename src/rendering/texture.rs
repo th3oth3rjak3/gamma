@@ -1,11 +1,10 @@
 // Add to your lib.rs or a new textures.rs module
 
-use wgpu::{Sampler, Texture as WgpuTexture, TextureView, util::DeviceExt};
+use wgpu::{Sampler, TextureView, util::DeviceExt};
 
 use crate::{gamma::Gamma, rendering::Frame};
 
 pub struct Texture {
-    pub(crate) texture: WgpuTexture,
     pub(crate) view: TextureView,
     pub(crate) sampler: Sampler,
     pub width: u32,
@@ -78,7 +77,6 @@ impl<S> Gamma<S> {
         });
 
         Ok(Texture {
-            texture,
             view,
             sampler,
             width: dimensions.0,

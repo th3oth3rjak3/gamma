@@ -42,7 +42,7 @@ pub fn init(_gamma: &mut Gamma<GameState>) -> GameState {
 }
 
 pub fn main() {
-    let result = GammaBuilder::new()
+    let result = GammaBuilder::default()
         // "with" methods are used to change configuration
         .with_title("Red Window")
         .with_size(1920, 1080)

@@ -1,5 +1,5 @@
 use crate::gamma::Gamma;
-use crate::rendering::{TexturePipeline, texture};
+use crate::rendering::TexturePipeline;
 use std::sync::Arc;
 use wgpu::{Instance, PresentMode, SurfaceConfiguration, TextureFormat, TextureUsages};
 use winit::event_loop::ActiveEventLoop;
@@ -7,7 +7,7 @@ use winit::window::{Fullscreen, Window};
 
 pub(crate) fn initialize_rendering<S>(gamma: &mut Gamma<S>, event_loop: &ActiveEventLoop) {
     let title = gamma.title.clone();
-    let window_size = gamma.logical_size.clone();
+    let window_size = gamma.logical_size;
 
     let mut window_attributes = Window::default_attributes()
         .with_title(title)

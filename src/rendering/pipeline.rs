@@ -1,7 +1,6 @@
-use wgpu::{BindGroupLayout, RenderPipeline, ShaderModule};
+use wgpu::{BindGroupLayout, RenderPipeline};
 
 pub struct TexturePipeline {
-    pub shader: ShaderModule,
     pub bind_group_layout: BindGroupLayout,
     pub pipeline: RenderPipeline,
 }
@@ -123,7 +122,6 @@ impl TexturePipeline {
         });
 
         Self {
-            shader,
             bind_group_layout,
             pipeline,
         }
