@@ -23,6 +23,7 @@ pub struct GammaBuilder<S> {
     pub(crate) resizable: bool,
     pub(crate) vsync: bool,
     pub(crate) fullscreen: bool,
+    pub(crate) close_on_escape: bool,
 }
 
 impl<S> Default for GammaBuilder<S> {
@@ -39,6 +40,7 @@ impl<S> Default for GammaBuilder<S> {
             resizable: true,
             vsync: true,
             fullscreen: false,
+            close_on_escape: false,
         }
     }
 }
@@ -69,6 +71,11 @@ impl<S> GammaBuilder<S> {
         self
     }
 
+    pub fn with_close_on_escape(mut self, close_on_escape: bool) -> Self {
+        self.close_on_escape = close_on_escape;
+        self
+    }
+
     pub fn on_init(mut self, init: InitFn<S>) -> Self {
         self.init_fn = Some(init);
         self
@@ -92,29 +99,18 @@ impl<S> GammaBuilder<S> {
             std::process::exit(-1);
         }
 
-        let mut gamma_instance = Gamma::<S> {
-            last_frame_time: Instant::now(),
-            current_frame: None,
-            draw_fn: self.draw_fn.unwrap_or(|_, _| {}),
-            update_fn: self.update_fn.unwrap_or(|_, _| {}),
-            init_fn: self.init_fn,
-            title: self.title.unwrap_or("Gamma Game".into()),
-            logical_size: self.logical_size.unwrap_or(LogicalSize {
-                width: 800.0,
-                height: 600.0,
-            }),
-            resizable: self.resizable,
-            vsync: self.vsync,
-            fullscreen: self.fullscreen,
-            window: Default::default(),
-            instance: None,
-            surface: None,
-            surface_config: None,
-            device: None,
-            queue: None,
-            adapter: None,
-            texture_pipeline: None,
-        };
+        let mut gamma_instance = Gamma::<S>::default();
+        gamma_instance.last_frame_time = Instant::now();
+        gamma_instance.init_fn = self.init_fn;
+        gamma_instance.logical_size = self
+            .logical_size
+            .unwrap_or_else(|| gamma_instance.logical_size);
+        gamma_instance.draw_fn = self.draw_fn.unwrap_or(|_, _| {});
+        gamma_instance.update_fn = self.update_fn.unwrap_or(|_, _| {});
+        gamma_instance.resizable = self.resizable;
+        gamma_instance.vsync = self.vsync;
+        gamma_instance.fullscreen = self.fullscreen;
+        gamma_instance.close_on_escape = self.close_on_escape;
 
         let event_loop = EventLoop::new().expect("Error occurred starting the event loop");
         event_loop.set_control_flow(ControlFlow::Poll);

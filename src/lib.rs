@@ -7,4 +7,5 @@ pub mod prelude {
     pub use crate::builder::GammaBuilder;
     pub use crate::gamma::Gamma;
     pub use crate::rendering::Texture;
+    pub use winit::keyboard::KeyCode;
 }

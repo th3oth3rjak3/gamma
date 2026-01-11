@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use std::time::Instant;
+use std::{collections::HashSet, sync::Arc};
 use wgpu::{Adapter, Device, Instance, Queue, Surface, SurfaceConfiguration};
 
-use winit::{dpi::LogicalSize, window::Window};
+use winit::{dpi::LogicalSize, keyboard::KeyCode, window::Window};
 
 use crate::{
     builder::InitFn,
@@ -28,6 +28,7 @@ pub struct Gamma<S> {
     pub(crate) resizable: bool,
     pub(crate) vsync: bool,
     pub(crate) fullscreen: bool,
+    pub(crate) close_on_escape: bool,
 
     // Rendering
     pub(crate) window: Option<Arc<Window>>,
@@ -38,6 +39,9 @@ pub struct Gamma<S> {
     pub(crate) queue: Option<Queue>,
     pub(crate) adapter: Option<Adapter>,
     pub(crate) texture_pipeline: Option<TexturePipeline>,
+
+    // User Input
+    pub(crate) pressed_keys: HashSet<KeyCode>,
 }
 
 impl<S> Default for Gamma<S> {
@@ -61,6 +65,7 @@ impl<S> Default for Gamma<S> {
             resizable: true,
             vsync: true,
             fullscreen: false,
+            close_on_escape: false,
 
             // Rendering
             window: Default::default(),
@@ -71,6 +76,9 @@ impl<S> Default for Gamma<S> {
             queue: None,
             adapter: None,
             texture_pipeline: None,
+
+            // User Input
+            pressed_keys: Default::default(),
         }
     }
 }

@@ -1,5 +1,8 @@
 use winit::{
-    application::ApplicationHandler, event::WindowEvent, event_loop::ActiveEventLoop,
+    application::ApplicationHandler,
+    event::WindowEvent,
+    event_loop::ActiveEventLoop,
+    keyboard::{KeyCode, PhysicalKey},
     window::WindowId,
 };
 
@@ -8,6 +11,22 @@ use crate::{gamma::Gamma, rendering::context::initialize_rendering};
 pub struct GammaRuntime<S> {
     pub(crate) context: Gamma<S>,
     pub(crate) state: Option<S>,
+}
+
+impl<S> GammaRuntime<S> {
+    pub(crate) fn shutdown(&mut self, event_loop: &ActiveEventLoop) {
+        self.context.surface = None;
+        self.context.device = None;
+        self.context.queue = None;
+        self.context.adapter = None;
+        self.context.instance = None;
+        self.context.surface_config = None;
+        self.context.window = None;
+        self.context.texture_pipeline = None;
+        self.state = None;
+
+        event_loop.exit();
+    }
 }
 
 impl<S> ApplicationHandler for GammaRuntime<S> {
@@ -29,19 +48,7 @@ impl<S> ApplicationHandler for GammaRuntime<S> {
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match event {
             WindowEvent::CloseRequested => {
-                println!("The close button was pressed; stopping");
-
-                self.context.surface = None;
-                self.context.device = None;
-                self.context.queue = None;
-                self.context.adapter = None;
-                self.context.instance = None;
-                self.context.surface_config = None;
-                self.context.window = None;
-                self.context.texture_pipeline = None;
-                self.state = None;
-
-                event_loop.exit();
+                self.shutdown(event_loop);
             }
             WindowEvent::RedrawRequested => {
                 let update_fn = self.context.update_fn;
@@ -62,6 +69,21 @@ impl<S> ApplicationHandler for GammaRuntime<S> {
                 // Only request redraw if still running and window exists
                 if let Some(window) = &self.context.window {
                     window.request_redraw();
+                }
+            }
+            WindowEvent::KeyboardInput { event, .. } => {
+                if let PhysicalKey::Code(keycode) = event.physical_key {
+                    if event.state.is_pressed() && keycode == KeyCode::Escape {
+                        if self.context.close_on_escape {
+                            self.shutdown(event_loop);
+                        }
+                    }
+
+                    if event.state.is_pressed() {
+                        self.context.pressed_keys.insert(keycode);
+                    } else {
+                        self.context.pressed_keys.remove(&keycode);
+                    }
                 }
             }
             _ => (),
