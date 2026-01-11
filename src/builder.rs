@@ -102,9 +102,7 @@ impl<S> GammaBuilder<S> {
         let mut gamma_instance = Gamma::<S>::default();
         gamma_instance.last_frame_time = Instant::now();
         gamma_instance.init_fn = self.init_fn;
-        gamma_instance.logical_size = self
-            .logical_size
-            .unwrap_or_else(|| gamma_instance.logical_size);
+        gamma_instance.logical_size = self.logical_size.unwrap_or(gamma_instance.logical_size);
         gamma_instance.draw_fn = self.draw_fn.unwrap_or(|_, _| {});
         gamma_instance.update_fn = self.update_fn.unwrap_or(|_, _| {});
         gamma_instance.resizable = self.resizable;

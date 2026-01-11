@@ -73,10 +73,11 @@ impl<S> ApplicationHandler for GammaRuntime<S> {
             }
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(keycode) = event.physical_key {
-                    if event.state.is_pressed() && keycode == KeyCode::Escape {
-                        if self.context.close_on_escape {
-                            self.shutdown(event_loop);
-                        }
+                    if event.state.is_pressed()
+                        && keycode == KeyCode::Escape
+                        && self.context.close_on_escape
+                    {
+                        self.shutdown(event_loop);
                     }
 
                     if event.state.is_pressed() {
