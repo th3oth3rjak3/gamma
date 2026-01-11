@@ -6,4 +6,4 @@ pub(crate) mod texture;
 
 pub use frame::Frame;
 pub use pipeline::TexturePipeline;
-pub use texture::Texture;
+pub use texture::{Flip, Texture};

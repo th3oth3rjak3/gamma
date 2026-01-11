@@ -25,8 +25,8 @@ pub fn update(gamma: &mut Gamma<GameState>, state: &mut GameState) {
 // The draw function is called every frame after update has finished processing.
 pub fn draw(gamma: &mut Gamma<GameState>, state: &mut GameState) {
     gamma.clear_screen(255, 0, 0);
-    gamma.draw_texture(&state.background, 0.0, 0.0);
-    gamma.draw_texture(&state.player, state.player_x, state.player_y);
+    gamma.draw_texture(&state.background, 0.0, 0.0, Flip::None);
+    gamma.draw_texture(&state.player, state.player_x, state.player_y, Flip::None);
 }
 
 // The init function is used to create your game state. In more complex scenarios,

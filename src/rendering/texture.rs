@@ -11,6 +11,18 @@ pub struct Texture {
     pub height: u32,
 }
 
+/// Flip a sprite.
+///
+/// - Flip::Horizontal - left side becomes the right side
+/// - Flip::Vertical - top becomes the bottom
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum Flip {
+    None,
+    Horizontal,
+    Vertical,
+    Both,
+}
+
 impl<S> Gamma<S> {
     // Load from file path
     pub fn load_texture(&self, path: &str) -> Result<Texture, String> {
@@ -85,8 +97,15 @@ impl<S> Gamma<S> {
     }
 
     // Draw a texture at a position
-    pub fn draw_texture(&mut self, texture: &Texture, x: f32, y: f32) {
-        self.draw_texture_scaled(texture, x, y, texture.width as f32, texture.height as f32);
+    pub fn draw_texture(&mut self, texture: &Texture, x: f32, y: f32, flip: Flip) {
+        self.draw_texture_scaled(
+            texture,
+            x,
+            y,
+            texture.width as f32,
+            texture.height as f32,
+            flip,
+        );
     }
 
     pub fn draw_texture_scaled(
@@ -96,6 +115,7 @@ impl<S> Gamma<S> {
         y: f32,
         width: f32,
         height: f32,
+        flip: Flip,
     ) {
         let (surface, device, queue, pipeline) = match (
             self.surface.as_ref(),
@@ -136,22 +156,32 @@ impl<S> Gamma<S> {
             tex_coords: [f32; 2],
         }
 
+        let (u0, u1) = match flip {
+            Flip::Horizontal | Flip::Both => (1.0, 0.0),
+            _ => (0.0, 1.0),
+        };
+
+        let (v0, v1) = match flip {
+            Flip::Vertical | Flip::Both => (1.0, 0.0),
+            _ => (0.0, 1.0),
+        };
+
         let vertices = [
             Vertex {
                 position: [ndc_x, ndc_y],
-                tex_coords: [0.0, 0.0],
+                tex_coords: [u0, v0],
             },
             Vertex {
                 position: [ndc_x + ndc_width, ndc_y],
-                tex_coords: [1.0, 0.0],
+                tex_coords: [u1, v0],
             },
             Vertex {
                 position: [ndc_x, ndc_y - ndc_height],
-                tex_coords: [0.0, 1.0],
+                tex_coords: [u0, v1],
             },
             Vertex {
                 position: [ndc_x + ndc_width, ndc_y - ndc_height],
-                tex_coords: [1.0, 1.0],
+                tex_coords: [u1, v1],
             },
         ];
 
