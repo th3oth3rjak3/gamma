@@ -1,4 +1,6 @@
-use std::time::Instant;
+use rodio::{OutputStream, OutputStreamBuilder};
+
+use std::time::{Duration, Instant};
 use std::{collections::HashSet, sync::Arc};
 use wgpu::{Adapter, Device, Instance, Queue, Surface, SurfaceConfiguration};
 
@@ -15,6 +17,7 @@ pub type DrawFn<S> = fn(&mut Gamma<S>, &mut S);
 pub struct Gamma<S> {
     // Internal
     pub(crate) last_frame_time: std::time::Instant,
+    pub(crate) delta: Duration,
     pub(crate) current_frame: Option<Frame>,
 
     // User Provided
@@ -40,15 +43,22 @@ pub struct Gamma<S> {
     pub(crate) adapter: Option<Adapter>,
     pub(crate) texture_pipeline: Option<TexturePipeline>,
 
+    // Audio
+    pub(crate) stream_handle: OutputStream,
+
     // User Input
     pub(crate) pressed_keys: HashSet<KeyCode>,
+    pub(crate) just_pressed_keys: HashSet<KeyCode>,
+    pub(crate) just_released_keys: HashSet<KeyCode>,
 }
 
 impl<S> Default for Gamma<S> {
     fn default() -> Self {
+        let stream_handle = OutputStreamBuilder::open_default_stream().unwrap();
         Self {
             // Internal
             last_frame_time: Instant::now(),
+            delta: Duration::ZERO,
             current_frame: None,
 
             // User Provided
@@ -77,8 +87,13 @@ impl<S> Default for Gamma<S> {
             adapter: None,
             texture_pipeline: None,
 
+            // Audio
+            stream_handle,
+
             // User Input
             pressed_keys: Default::default(),
+            just_pressed_keys: Default::default(),
+            just_released_keys: Default::default(),
         }
     }
 }

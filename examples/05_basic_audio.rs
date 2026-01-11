@@ -13,18 +13,28 @@ pub struct GameState {
     pub background: Texture,
     pub player: Texture,
     pub player_facing: Facing,
+    pub chop: Sound,
+    pub out_of_time: Sound,
 }
 
 // The update function is called every frame just before the draw function.
 pub fn update(gamma: &mut Gamma<GameState>, state: &mut GameState) {
-    // We can use the is_key_pressed function to see if a user has the key held down.
-    if gamma.is_key_pressed(KeyCode::ArrowLeft) {
+    // We can use the is_key_just_pressed function to see if the key was pressed just before this frame.
+    if gamma.is_key_just_pressed(KeyCode::ArrowLeft) {
         state.player_facing = Facing::Left;
+        gamma.play_sound(&state.chop);
     }
 
-    if gamma.is_key_pressed(KeyCode::ArrowRight) {
+    if gamma.is_key_just_pressed(KeyCode::ArrowRight) {
         state.player_facing = Facing::Right;
+        gamma.play_sound(&state.chop);
     }
+
+    if gamma.is_key_just_released(KeyCode::Space) {
+        gamma.play_sound(&state.out_of_time);
+    }
+
+    println!("Player X Position: {}", state.player_x);
 }
 
 // The draw function is called every frame after update has finished processing.
@@ -51,12 +61,24 @@ pub fn init(gamma: &mut Gamma<GameState>) -> GameState {
         .load_texture_from_bytes(include_bytes!("../assets/graphics/player.png"))
         .unwrap();
 
+    let chop = gamma
+        .load_sound_from_bytes(include_bytes!("../assets/sounds/chop.wav"))
+        .unwrap();
+
+    let mut out_of_time = gamma
+        .load_sound_from_bytes(include_bytes!("../assets/sounds/out_of_time.wav"))
+        .unwrap();
+
+    out_of_time.set_volume(0.4);
+
     let state = GameState {
         player_x: 1920.0 / 2.0, // roughly centered
         player_y: 1080.0 / 2.0, // roughly centered
         background,
         player,
         player_facing: Facing::Left,
+        chop,
+        out_of_time,
     };
 
     state

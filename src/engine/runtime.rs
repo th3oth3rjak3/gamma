@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -51,6 +53,9 @@ impl<S> ApplicationHandler for GammaRuntime<S> {
                 self.shutdown(event_loop);
             }
             WindowEvent::RedrawRequested => {
+                self.context.delta = Instant::now() - self.context.last_frame_time;
+                self.context.last_frame_time = Instant::now();
+
                 let update_fn = self.context.update_fn;
                 let draw_fn = self.context.draw_fn;
 
@@ -61,6 +66,10 @@ impl<S> ApplicationHandler for GammaRuntime<S> {
 
                 // Call the user's draw function to prepare to draw to the window.
                 draw_fn(&mut self.context, state);
+
+                // Clear the just_pressed_keys and just_released_keys for the next frame
+                self.context.just_pressed_keys.clear();
+                self.context.just_released_keys.clear();
 
                 if let Some(frame) = self.context.current_frame.take() {
                     frame.texture.present();
@@ -81,9 +90,13 @@ impl<S> ApplicationHandler for GammaRuntime<S> {
                     }
 
                     if event.state.is_pressed() {
-                        self.context.pressed_keys.insert(keycode);
+                        if self.context.pressed_keys.insert(keycode) {
+                            self.context.just_pressed_keys.insert(keycode);
+                        }
                     } else {
-                        self.context.pressed_keys.remove(&keycode);
+                        if self.context.pressed_keys.remove(&keycode) {
+                            self.context.just_released_keys.insert(keycode);
+                        }
                     }
                 }
             }
